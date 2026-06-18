@@ -5,7 +5,9 @@ pd.set_option('display.max_columns', None)
 import fastf1 
 import time
 import argparse
-
+# %%
+df = pd.read_parquet("data/2019_01_R.parquet")
+df
 # %%
 
 class CollectResults:
@@ -21,15 +23,23 @@ class CollectResults:
             return pd.DataFrame()
 
         session._load_drivers_results()
-
         df = session.results
-        df["Mode"] = mode
-
+        
+        df["Year"] = session.date.year
+        df["Date"] = session.date
+        df["Mode"] = session.name
+        df["RoundNumber"] = session.event["RoundNumber"]
+        df["OfficialEventName"] = session.event["OfficialEventName"]
+        df["EventName"] = session.event["EventName"]
+        df["Country"] = session.event["Country"]
+        df["Location"] = session.event["Location"]
+        
         return df
     
 
-    def save_data(self, df, year, gp, mode):
-        df.to_parquet(f"data/{year}_{gp:02}_{mode}.parquet")
+    def save_data(self, df: pd.DataFrame, year:int, gp:int, mode:str):
+        filename = f"data/{year}_{gp:02}_{mode}.parquet"
+        df.to_parquet(filename,index=False)
 
     def process(self, year, gp, mode):
         df = self.get_data(year, gp, mode)
@@ -52,16 +62,14 @@ class CollectResults:
             time.sleep(10)
 # %%
 
-if __name__ == "__main__":
+parser = argparse.ArgumentParser()
+parser.add_argument("--years", "-y", nargs="+", type=int)
+parser.add_argument("--modes", "-m", nargs="+")
 
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--years", "-y", nargs="+", type=int)
-    parser.add_argument("--modes", "-m", nargs="+")
-
-    args = parser.parse_args()
+args = parser.parse_args()
 
 
-    collect = CollectResults(args.years, args.modes)
-    collect.process_years()
+collect = CollectResults(args.years, args.modes)
+collect.process_years()
 
 
