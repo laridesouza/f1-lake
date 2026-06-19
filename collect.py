@@ -6,9 +6,6 @@ import fastf1
 import time
 import argparse
 # %%
-df = pd.read_parquet("data/2019_01_R.parquet")
-df
-# %%
 
 class CollectResults:
 
@@ -43,10 +40,12 @@ class CollectResults:
 
     def process(self, year, gp, mode):
         df = self.get_data(year, gp, mode)
+        
         if df.empty:
             return False
         
         self.save_data(df, year, gp, mode)
+        time.sleep(1)
         return True
     
     def process_year_modes(self, year):
@@ -63,13 +62,19 @@ class CollectResults:
 # %%
 
 parser = argparse.ArgumentParser()
+parser.add_argument("--start", type=int, default=0)
+parser.add_argument("--stop", type=int, default=0)
 parser.add_argument("--years", "-y", nargs="+", type=int)
 parser.add_argument("--modes", "-m", nargs="+")
-
 args = parser.parse_args()
 
+if args.years:
+    collect = CollectResults(args.years, args.modes)
 
-collect = CollectResults(args.years, args.modes)
+elif args.start and args.stop:
+    years = [i for i in range(args.start, args.stop+1)]
+    collect = CollectResults(years, args.modes)
+
 collect.process_years()
 
 
